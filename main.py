@@ -4,6 +4,7 @@ import shutil
 import sys
 
 import numpy as np
+import pandas as pd
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence
@@ -26,6 +27,18 @@ def get_img_paths(dir, extensions=('.jpg', '.png', '.jpeg')):
             img_paths.append(os.path.join(dir, filename))
 
     return img_paths
+
+def get_assigned_labels(dir):
+    assigned_labels = {}
+
+    file_path = os.path.join(dir, "output/assigned_classes_automatically_generated.csv")
+    if os.path.isfile(file_path):
+        print("Loading pre-assigned classes from file")
+        df = pd.read_csv(file_path)
+        df["classes"] = df.iloc[:,1:].apply(lambda row: (df.iloc[:,1:].columns.to_numpy()[row.to_numpy()==1]).tolist(), axis=1)
+        assigned_labels = df[["img", "classes"]].set_index("img").to_dict()["classes"]
+
+    return assigned_labels
 
 
 def make_folder(directory):
@@ -317,7 +330,7 @@ class LabelerWindow(QWidget):
         self.labels = labels
         self.num_labels = len(self.labels)
         self.num_images = len(self.img_paths)
-        self.assigned_labels = {}
+        self.assigned_labels = get_assigned_labels(input_folder)
         self.mode = mode
 
         # initialize list to save all label buttons
@@ -411,10 +424,10 @@ class LabelerWindow(QWidget):
         next_im_btn.clicked.connect(self.show_next_image)
 
         # Add "Prev Image" and "Next Image" keyboard shortcuts
-        prev_im_kbs = QShortcut(QKeySequence("p"), self)
+        prev_im_kbs = QShortcut(QKeySequence("left"), self)
         prev_im_kbs.activated.connect(self.show_prev_image)
 
-        next_im_kbs = QShortcut(QKeySequence("n"), self)
+        next_im_kbs = QShortcut(QKeySequence("right"), self)
         next_im_kbs.activated.connect(self.show_next_image)
 
         # Add "generate csv file" button
@@ -458,7 +471,7 @@ class LabelerWindow(QWidget):
 
         # if the img has some label already
         if img_name in self.assigned_labels.keys():
-
+            import ipdb; ipdb.set_trace()
             # label is already there = means tht user want's to remove label
             if label in self.assigned_labels[img_name]:
                 self.assigned_labels[img_name].remove(label)
