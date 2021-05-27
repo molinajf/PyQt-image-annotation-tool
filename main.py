@@ -471,7 +471,6 @@ class LabelerWindow(QWidget):
 
         # if the img has some label already
         if img_name in self.assigned_labels.keys():
-            import ipdb; ipdb.set_trace()
             # label is already there = means tht user want's to remove label
             if label in self.assigned_labels[img_name]:
                 self.assigned_labels[img_name].remove(label)
